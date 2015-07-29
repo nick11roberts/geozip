@@ -46,7 +46,7 @@ func Decode(bucket int64) (float64, float64) {
 
 //Validate (some description here)
 func Validate(latitude, longitude float64) bool {
-	if (latitude < 90.0 || latitude > -90.0) && (longitude < 180.0 || longitude > 180.0) {
+	if latitude < 90.0 && latitude > -90.0 && longitude < 180.0 && longitude > -180.0 {
 		return true
 	}
 	return false
