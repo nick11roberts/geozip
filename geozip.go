@@ -13,7 +13,7 @@ const maxPrecision int = 18
 
 //Encode (some description here)
 func Encode(latitude, longitude float64, validate bool, precision int) int64 {
-	if !Validate(latitude, longitude) {
+	if validate && !Valid(latitude, longitude) {
 		return 0
 	}
 	latitudeShifted := decimal.NewFromFloat(latitude).Add(decimal.NewFromFloat(90.0))
@@ -39,13 +39,34 @@ func Encode(latitude, longitude float64, validate bool, precision int) int64 {
 }
 
 //Decode (some description here)
-func Decode(bucket int64) (float64, float64) {
+func Decode(bucket int64) (float64, float64, bool) {
+	var latitudeUnshifted, longitudeUnshifted decimal.Decimal
 	var latitude, longitude float64
-	return latitude, longitude
+	var err error
+	var exact bool
+	bucketString := strconv.FormatInt(bucket, 10)
+	for len(bucketString) < 18 {
+		bucketString = "0" + bucketString
+	}
+
+	latString, lonString := unzip(bucketString)
+	latString = latString[0:3] + "." + latString[3:]
+	lonString = lonString[0:3] + "." + lonString[3:]
+
+	latitudeUnshifted, err = decimal.NewFromString(latString)
+	longitudeUnshifted, err = decimal.NewFromString(lonString)
+	if err != nil {
+		fmt.Errorf("Error creating decimal from string")
+	}
+	latitudeUnshifted = latitudeUnshifted.Sub(decimal.NewFromFloat(90.0))
+	longitudeUnshifted = longitudeUnshifted.Sub(decimal.NewFromFloat(180.0))
+	latitude, exact = latitudeUnshifted.Float64()
+	longitude, exact = longitudeUnshifted.Float64()
+	return latitude, longitude, exact
 }
 
-//Validate (some description here)
-func Validate(latitude, longitude float64) bool {
+//Valid (some description here)
+func Valid(latitude, longitude float64) bool {
 	if latitude < 90.0 && latitude > -90.0 && longitude < 180.0 && longitude > -180.0 {
 		return true
 	}
@@ -60,6 +81,15 @@ func zip(latDigits, lonDigits string) string {
 		bucketDigits += string(lonDigits[i])
 	}
 	return bucketDigits
+}
+
+func unzip(bucketDigits string) (string, string) {
+	var latDigits, lonDigits string
+	for i := 0; i < 18; i += 2 {
+		latDigits += string(bucketDigits[i])
+		lonDigits += string(bucketDigits[i+1])
+	}
+	return latDigits, lonDigits
 }
 
 func resizeCharacteristic(characteristic string) string {
