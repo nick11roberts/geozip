@@ -13,7 +13,7 @@ const maxPrecision int = 18
 
 //Encode generates a geozip bucket id for a given latitude and longitude.
 //Argument validate is true if a validation is to be performed.
-//Precision is a number in the range of [0,18] such that 0 gives lowest precision (000000000000000000) and 18 gives the most precise bucket id.
+//Precision is a number in the range of [0, 18] such that 0 gives lowest precision (000000000000000000) and 18 gives the most precise bucket id.
 func Encode(latitude, longitude float64, validate bool, precision int) int64 {
 	if validate && !Valid(latitude, longitude) {
 		return 0
