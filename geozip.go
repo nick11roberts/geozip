@@ -1,4 +1,4 @@
-//Package geozip (some description here)
+//Package geozip implements the Geozip algorithm described here: http://geozipcode.blogspot.nl/2015/02/geozip.html
 package geozip
 
 import (
@@ -11,7 +11,9 @@ import (
 
 const maxPrecision int = 18
 
-//Encode (some description here)
+//Encode generates a geozip bucket id for a given latitude and longitude.
+//Argument validate is true if a validation is to be performed.
+//Precision is a number in the range of [0,18] such that 0 gives lowest precision (000000000000000000) and 18 gives the most precise bucket id.
 func Encode(latitude, longitude float64, validate bool, precision int) int64 {
 	if validate && !Valid(latitude, longitude) {
 		return 0
@@ -38,7 +40,8 @@ func Encode(latitude, longitude float64, validate bool, precision int) int64 {
 	return bucket
 }
 
-//Decode (some description here)
+//Decode is the inverse operation of Encode.
+//Decode returns latitude, longitude, and whether or not they are both represented precisely as float64 types.
 func Decode(bucket int64) (float64, float64, bool) {
 	var latitudeUnshifted, longitudeUnshifted decimal.Decimal
 	var latitude, longitude float64
@@ -65,7 +68,7 @@ func Decode(bucket int64) (float64, float64, bool) {
 	return latitude, longitude, exact
 }
 
-//Valid (some description here)
+//Valid returns true if latitude is in the range of [-90, 90] and longtitude is in the range of [-180, 180].
 func Valid(latitude, longitude float64) bool {
 	if latitude < 90.0 && latitude > -90.0 && longitude < 180.0 && longitude > -180.0 {
 		return true
