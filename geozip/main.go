@@ -9,5 +9,5 @@ import (
 func main() {
 	lat, lon := 45.321, 164.4533
 	bucket := geozip.Encode(lat, lon)
-	fmt.Println("")
+	fmt.Println(bucket)
 }
