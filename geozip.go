@@ -9,6 +9,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+const maxPrecision int = 18
+
 //Encode (some description here)
 func Encode(latitude, longitude float64, validate bool, precision int) int64 {
 	if !Validate(latitude, longitude) {
@@ -16,16 +18,23 @@ func Encode(latitude, longitude float64, validate bool, precision int) int64 {
 	}
 	latitudeShifted := decimal.NewFromFloat(latitude).Add(decimal.NewFromFloat(90.0))
 	longitudeShifted := decimal.NewFromFloat(longitude).Add(decimal.NewFromFloat(180.0))
-	latString := latitudeShifted.String()
-	lonString := longitudeShifted.String()
-	latString = strings.Replace(latString, ".", "", 1)
-	lonString = strings.Replace(lonString, ".", "", 1)
+	latString := latitudeShifted.String() + ".0"
+	lonString := longitudeShifted.String() + ".0"
+	latParts := strings.Split(latString, ".")
+	lonParts := strings.Split(lonString, ".")
+	latString = resizeCharacteristic(latParts[0]) + resizeMantissa(latParts[1])
+	lonString = resizeCharacteristic(lonParts[0]) + resizeMantissa(lonParts[1])
 	bucketString := zip(latString, lonString)
 	bucket, err := strconv.ParseInt(bucketString, 10, 64)
 	if err != nil {
 		fmt.Errorf("Error parsing zipped string to int64")
 	}
-	//Fix precision here
+	for i := 0; i < maxPrecision-precision; i++ {
+		bucket /= 10
+	}
+	for i := 0; i < maxPrecision-precision; i++ {
+		bucket *= 10
+	}
 	return bucket
 }
 
@@ -46,8 +55,6 @@ func Validate(latitude, longitude float64) bool {
 
 func zip(latDigits, lonDigits string) string {
 	var bucketDigits string
-	latDigits = resize(latDigits)
-	lonDigits = resize(lonDigits)
 	for i := 0; i < 9; i++ {
 		bucketDigits += string(latDigits[i])
 		bucketDigits += string(lonDigits[i])
@@ -55,12 +62,19 @@ func zip(latDigits, lonDigits string) string {
 	return bucketDigits
 }
 
-func resize(component string) string {
-	for len(component) > 9 {
-		component = component[0 : len(component)-1]
+func resizeCharacteristic(characteristic string) string {
+	for len(characteristic) < 3 {
+		characteristic = "0" + characteristic
 	}
-	for len(component) < 9 {
-		component = "0" + component
+	return characteristic
+}
+
+func resizeMantissa(mantissa string) string {
+	for len(mantissa) > 6 {
+		mantissa = mantissa[0 : len(mantissa)-1]
 	}
-	return component
+	for len(mantissa) < 6 {
+		mantissa = mantissa + "0"
+	}
+	return mantissa
 }
